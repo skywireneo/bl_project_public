@@ -1,0 +1,142 @@
+syntax = "proto3";
+
+package mainbot;
+
+service MainbotService {
+  rpc GetPosts (GetPostsRequest) returns (GetPostsResponse);
+  rpc GetReasons (GetReasonsRequest) returns (GetReasonsResponse);
+  rpc GetPVZTypes (GetPVZTypesRequest) returns (GetPVZTypesResponse);
+  rpc AddIncident (AddIncidentRequest) returns (AddIncidentResponse);
+
+  rpc GetContestationPersones (GetContestationPersonesRequest) returns (GetContestationPersonesResponse);
+  rpc GetContestationPersonesArray (GetContestationPersonesArrayRequest) returns (GetContestationPersonesArrayResponse);
+  rpc GetContestationCheckIncidentId (GetContestationCheckIncidentIdRequest) returns (GetContestationCheckIncidentIdResponse);
+  rpc AddContestation (AddContestationRequest) returns (AddContestationResponse);
+
+  rpc UserExistByTgId (UserExistByTgIdRequest) returns (UserExistByTgIdResponse);
+  rpc CreateUserViaTg (CreateUserViaTgRequest) returns (CreateUserViaTgResponse);
+  rpc ConnectUserViaTg (ConnectUserViaTgRequest) returns (ConnectUserViaTgResponse);
+
+  rpc TgNotification (TgNotificationRequest) returns (TgNotificationResponse);
+  rpc UpdateTgPostMessageId (UpdateTgPostMessageIdRequest) returns (UpdateTgPostMessageIdResponse);
+  rpc TgNotificationWithJson (TgNotificationRequest) returns (TgNotificationJsonResponse);
+
+}
+
+message GetPostsRequest {
+  string type = 1;
+}
+
+message GetPostsResponse {
+  repeated string posts = 1;
+}
+
+message GetReasonsRequest {
+  string type = 1;
+}
+
+message GetReasonsResponse {
+  repeated string reasons = 1;
+}
+
+message GetPVZTypesRequest {
+}
+
+message GetPVZTypesResponse {
+  repeated string PVZTypes = 1;
+}
+
+message AddIncidentRequest {
+  string json = 1;
+  bool fromTg = 2;
+}
+
+message AddIncidentResponse {
+  string response = 1;
+}
+
+message GetContestationPersonesRequest {
+  string incidentId = 1;
+  string data = 2;
+}
+
+message GetContestationPersonesResponse {
+  string personId = 1;
+}
+
+message GetContestationPersonesArrayRequest {
+  string incidentId = 1;
+}
+
+message GetContestationPersonesArrayResponse {
+  repeated string arr = 1;
+}
+
+message GetContestationCheckIncidentIdRequest {
+  string incidentId = 1;
+}
+
+message GetContestationCheckIncidentIdResponse {
+  bool response = 1;
+}
+
+message AddContestationRequest {
+  string json = 1;
+  bool fromTg = 2;
+}
+
+message AddContestationResponse {
+  string response = 1;
+}
+
+message UserExistByTgIdRequest {
+  string userTgId = 1;
+}
+
+message UserExistByTgIdResponse {
+  string status = 1;
+}
+
+message CreateUserViaTgRequest {
+  string userTgname = 1;
+  string userTgId = 2;
+  string first_name = 3;
+}
+
+message CreateUserViaTgResponse {
+  string createdUser = 1;
+}
+
+message ConnectUserViaTgRequest {
+  string userTgname = 1;
+  string userTgId = 2;
+  string login = 3;
+}
+
+message ConnectUserViaTgResponse {
+  string connectedUser = 1;
+}
+
+message TgNotificationRequest {
+  string tgId = 1;
+  string type = 2;
+  string params = 3;
+}
+
+message TgNotificationResponse {
+  bool status = 1;
+}
+
+message UpdateTgPostMessageIdRequest {
+  string id = 1;
+  string allMessageIds = 2;
+}
+
+message UpdateTgPostMessageIdResponse {
+  bool status = 1;
+}
+
+message TgNotificationJsonResponse {
+  bool status = 1;
+  string json = 2;
+}

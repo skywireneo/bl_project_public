@@ -1,0 +1,4 @@
+# === ОТОЗВАННЫЕ ТОКЕНЫ ===
+# Вставьте полный текст JWT токена (включая точки) для его мгновенной блокировки.
+# Пример:
+# eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxfX0.abc123...

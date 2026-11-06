@@ -1,0 +1,258 @@
+# ===========================
+# Настройки cron-задач мониторинга
+# ===========================
+# Расписание можно задавать тремя способами:
+#
+# 1interval_seconds: 60
+#     → каждые 60 секунд (простой вариант)
+#
+# 2every: "5 minutes"
+#     → каждые 5 минут, "10 seconds", "2 hours", "1 day"
+#
+# 3cron: "*/15 * * * *"
+#     → классический формат CRON (как в Linux)
+#
+# ---------------------------
+# Формат CRON-расписания:
+# ---------------------------
+# ┌───────────── минута (0 - 59)
+# │ ┌───────────── час (0 - 23)
+# │ │ ┌───────────── день месяца (1 - 31)
+# │ │ │ ┌───────────── месяц (1 - 12)
+# │ │ │ │ ┌───────────── день недели (0 - 6, где 0 — воскресенье)
+# │ │ │ │ │
+# │ │ │ │ │
+# * * * * *
+#
+# Примеры cron:
+# ----------------
+# "*/5 * * * *"        → каждые 5 минут
+# "0 * * * *"          → каждый час, ровно в 00 минут
+# "0 3 * * *"          → каждый день в 03:00 ночи
+# "30 6 * * 1-5"       → по будням в 06:30
+# "0 0 1 * *"          → первого числа каждого месяца, в полночь
+# "*/10 8-20 * * *"    → каждые 10 минут с 8:00 до 20:00
+# "0 9,18 * * 1-5"     → в 09:00 и 18:00 по будням
+#
+# Поддерживаются символы:
+# - *   — любое значение
+# - */N — каждый N-й интервал (например, каждые 5 минут: */5)
+# - ,   — перечисление (например, 1,15,30)
+# - -   — диапазон (например, 1-5)
+#
+# ---------------------------
+# Дополнительно:
+# ---------------------------
+# api_key_env: имя переменной в .env, где хранится X-API-KEY
+# method: GET или POST
+# name: человекочитаемое название задачи
+# url: адрес запроса
+# ===========================
+
+cron_jobs:
+
+  - name: "Переносит данные статистики из Redis в Postgres, удаляет обработанные ключи из Redis"
+    url: "http://backend_bl:3000/sys/stats/aggregateFromRedis_gHbXmhaxe4"
+    method: "POST"
+    api_key_env: "MONITORING_API_KEY_TO_BACKEND_1"
+    cron: "*/5 * * * *"  # Каждые 5 минут
+    timezone: "Europe/Moscow"
+
+  - name: "Агрегирует статистику minute - hour, hour - day"
+    url: "http://backend_bl:3000/sys/stats/aggregateToHigherGranularity_cFmtVN4Bwg"
+    method: "POST"
+    api_key_env: "MONITORING_API_KEY_TO_BACKEND_1"
+    cron: "0 * * * *"  # Каждый час
+    timezone: "Europe/Moscow"
+  
+  - name: "Удаляет старые записи статистики из Postgres согласно retention"
+    url: "http://backend_bl:3000/sys/stats/cleanup_rv94V64XGw"
+    method: "POST"
+    api_key_env: "MONITORING_API_KEY_TO_BACKEND_1"
+    cron: "5 0 * * *"  # Каждый день в 00:05
+    timezone: "Europe/Moscow"
+
+  - name: "Удаляет старые записи статистики устройств в модулях"
+    url: "http://backend_bl:3000/sys/stats/cleanupOldStats_rv9IUGjbadds54g5g5f"
+    method: "POST"
+    api_key_env: "MONITORING_API_KEY_TO_BACKEND_1"
+    cron: "10 0 * * *"  # Каждый день в 00:10
+    timezone: "Europe/Moscow"
+
+  - name: "Отчистка старых записай поисков (старше 90 дней)"
+    url: "http://backend_bl:3000/sys/search/historyCleanup_Jbs5m8KPKRHLj127"
+    method: "POST"
+    api_key_env: "MONITORING_API_KEY_TO_BACKEND_2"
+    cron: "4 0 * * *"  # Каждый день в 00:04
+    timezone: "Europe/Moscow"
+
+  - name: "Отчистка старых рейт лимитов"
+    url: "http://backend_bl:3000/sys/system/cleanupExpiredLimits_Uyug8Gh5f6J"
+    method: "POST"
+    api_key_env: "MONITORING_API_KEY_TO_BACKEND_3"
+    cron: "0 * * * *"  # Каждый час в 00
+    timezone: "Europe/Moscow"
+
+  - name: "Отчистка старых логов смены статуса"
+    url: "http://backend_bl:3000/sys/user/cleanupOldRoleHistory_UhjgHBjghjhbhmjgbT1"
+    method: "POST"
+    api_key_env: "MONITORING_API_KEY_TO_BACKEND_4"
+    cron: "0 3 * * 2,5"  #  в 03:00 по вторникам и пятницам
+    timezone: "Europe/Moscow"
+
+  - name: "Отчистка старых логов смены пароля"
+    url: "http://backend_bl:3000/sys/user/cleanupOldPasswordHistory_xK9mP2nL8qR4"
+    method: "POST"
+    api_key_env: "MONITORING_API_KEY_TO_BACKEND_4"
+    cron: "0 4 * * 2,5"  #  в 04:00 по вторникам и пятницам
+    timezone: "Europe/Moscow"
+
+  - name: "Удаление старых и отозванных рефреш токенов"
+    url: "http://backend_bl:3000/sys/user/deleteOldRevokedTokens_IyvyuY8Uga5ff5ers"
+    method: "POST"
+    api_key_env: "MONITORING_API_KEY_TO_BACKEND_2"
+    cron: "4 1 * * *"  # Каждый день в 01:04
+    timezone: "Europe/Moscow"
+
+  - name: "Удаление старой истории изменения настроек"
+    url: "http://backend_bl:3000/sys/system/cleanOldHistory_UIhk45jGUY6GHJ7bjhvcy5K"
+    method: "POST"
+    api_key_env: "MONITORING_API_KEY_TO_BACKEND_4"
+    cron: "5 1 1 * *"  # 1 числа в 1:05 каждого месяца в полночь
+    timezone: "Europe/Moscow"
+
+  - name: "Удаление старой истории крон критических действий"
+    url: "http://backend_bl:3000/sys/criticalActions/cleanupMaintenanceHistory_IUgjhFYG752Vghfy725hGBHJJG6UYghb"
+    method: "POST"
+    api_key_env: "MONITORING_API_KEY_TO_BACKEND_1"
+    cron: "35 1 * * *"  # Каждый день в 01:35
+    timezone: "Europe/Moscow"
+
+  - name: "Удаление старой истории изменений доступов и статусов"
+    url: "http://backend_bl:3000/sys/criticalActions/cleanupOldPermissionHistory_xR7kM3nP9qW2"
+    method: "POST"
+    api_key_env: "MONITORING_API_KEY_TO_BACKEND_4"
+    cron: "45 1 * * *"  # Каждый день в 01:45
+    timezone: "Europe/Moscow"
+
+  - name: "Отзыв доверенных устройств"
+    url: "http://backend_bl:3000/sys/user/downgradeOldTrustedDevices_xK9mP2nL8qR4"
+    method: "POST"
+    api_key_env: "MONITORING_API_KEY_TO_BACKEND_4"
+    cron: "45 2 * * *"  # Каждый день в 02:45
+    timezone: "Europe/Moscow"
+
+  - name: "Отчистка уведомлений старых"
+    url: "http://backend_bl:3000/sys/notifications/cleanupOldNotifications_xK9mP2nL8qR4"
+    method: "POST"
+    api_key_env: "MONITORING_API_KEY_TO_BACKEND_1"
+    cron: "45 3 * * *"  # Каждый день в 03:45
+    timezone: "Europe/Moscow"
+
+  - name: "Отчистка истории настроек уведомлений админки"
+    url: "http://backend_bl:3000/sys/notifications/cleanupOldAdminHistory_Kp8mN3873524xR7qW2"
+    method: "POST"
+    api_key_env: "MONITORING_API_KEY_TO_BACKEND_1"
+    cron: "50 3 * * *"  # Каждый день в 03:50
+    timezone: "Europe/Moscow"
+
+  - name: "Отчистка истории настроек уведомлений пользователя"
+    url: "http://backend_bl:3000/sys/notifications/cleanupOldUserSettingsHistory_xK9mP2nL8qR4"
+    method: "POST"
+    api_key_env: "MONITORING_API_KEY_TO_BACKEND_2"
+    cron: "55 3 * * *"  # Каждый день в 03:55
+    timezone: "Europe/Moscow"
+
+  # - name: "Delete Old Chats"
+  #   url: "http://backend_bl:3000/api/chat/cronDeleteChat_L9QZUcyuKUpF0"
+  #   method: "POST"
+  #   api_key_env: "MONITORING_API_KEY_TO_BACKEND_2"
+  #   cron: "0 2 * * *"  #  в 02:00 каждый день
+  #   timezone: "Europe/Moscow"
+
+  # - name: "Delete Old Logs"
+  #   url: "http://logs_service:3002/logs/log/cronDeleteOldLogs_L7NBaFUjrqdP"
+  #   method: "POST"
+  #   api_key_env: "MONITORING_API_KEY_TO_BACKEND_4"
+  #   cron: "0 3 * * 2,5"  #  в 03:00 по вторникам и пятницам
+  #   timezone: "Europe/Moscow"
+
+  # - name: "Delete Old Notifications"
+  #   url: "http://backend_bl:3000/api/notifications/deleteOldNotifications_cQvwZY0ANH2ckX8Z"
+  #   method: "POST"
+  #   api_key_env: "MONITORING_API_KEY_TO_BACKEND_3"
+  #   cron: "0 2,12,18 * * *"  #  в 02:00, 12:00 и 18:00 каждый день
+  #   timezone: "Europe/Moscow"
+
+  - name: "Удалить старые логи входов"
+    url: "http://backend_bl:3000/sys/user/deleteOldLoginLogs_rdivvAl57ASct"
+    method: "POST"
+    api_key_env: "MONITORING_API_KEY_TO_BACKEND_4"
+    cron: "30 3 * * *"  #  в 03:30 каждый день
+    timezone: "Europe/Moscow"
+
+  - name: "Удалить старые устройства"
+    url: "http://backend_bl:3000/sys/user/cleanupOldDevices_UhjgHYG5jbK4IYGK5JBjghKJB"
+    method: "POST"
+    api_key_env: "MONITORING_API_KEY_TO_BACKEND_3"
+    cron: "50 3 * * *"  #  в 03:50 каждый день
+    timezone: "Europe/Moscow"
+  
+  # - name: "Delete All SQL Logs"
+  #   url: "http://backend_bl:3000/api/system/deleteSQLLogs_YzeXebGEnok6ZgvW"
+  #   method: "POST"
+  #   api_key_env: "MONITORING_API_KEY_TO_BACKEND_4"
+  #   cron: "30 3 * * 2"  #  в 03:30 по вторникам
+  #   timezone: "Europe/Moscow"
+
+  # - name: "Delete Old Crit Act Logs"
+  #   url: "http://backend_bl:3000/api/criticalActions/deleteCritActlogs_Jbs5m8KPKRHLj127"
+  #   method: "POST"
+  #   api_key_env: "MONITORING_API_KEY_TO_BACKEND_2"
+  #   cron: "40 3 * * 2"  #  в 03:40 по вторникам
+  #   timezone: "Europe/Moscow"
+
+  # - name: "Send Anonsment Notifs"
+  #   url: "http://backend_bl:3000/api/announcements/send-notifications_v4r3p8xF9H6wVMAd"
+  #   method: "POST"
+  #   api_key_env: "MONITORING_API_KEY_TO_BACKEND_3"
+  #   cron: "0 * * * *"  #  в 0 минут каждый час
+  #   timezone: "Europe/Moscow"
+
+  # - name: "Delete Old Anonsment"
+  #   url: "http://backend_bl:3000/api/announcements/cleanup-old_6dvMZMRQkWC11xY5"
+  #   method: "POST"
+  #   api_key_env: "MONITORING_API_KEY_TO_BACKEND_3"
+  #   cron: "15 2 * * *"  #  в 02:15 каждый день
+  #   timezone: "Europe/Moscow"
+
+  # Бекапы баз данных
+
+  - name: "Backup Main DB Morning"
+    method: "LOCAL"
+    script: "scripts/backup_db.py"
+    cron: "15 3 * * *"      # каждый день в 03:15
+    timezone: "Europe/Moscow"
+
+  - name: "Backup Main DB Afternoon"
+    method: "LOCAL"
+    script: "scripts/backup_db.py"
+    cron: "15 15 * * *"     # каждый день в 15:15
+    timezone: "Europe/Moscow"
+
+  # - name: "Backup Logs DB Morning"
+  #   method: "LOCAL"
+  #   script: "scripts/backup_logs_db.py"
+  #   cron: "40 3 * * *"      # каждый день в 03:40
+  #   timezone: "Europe/Moscow"
+
+  # - name: "Backup Logs DB Afternoon"
+  #   method: "LOCAL"
+  #   script: "scripts/backup_logs_db.py"
+  #   cron: "40 15 * * *"     # каждый день в 15:40
+  #   timezone: "Europe/Moscow"
+
+monitoring:
+  retention_days: 10 # Логи работы контейнеров за столько последних дней
+  backups_last_count: 3 # Будет столько последних бекапов если backup_sql: true и х2 последних бекапов если backup_sql: false
+  backup_sql: true # Вкл/выкл дамп в sql представлении

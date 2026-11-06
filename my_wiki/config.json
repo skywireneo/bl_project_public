@@ -1,0 +1,72 @@
+{
+    "global": {
+        "site_url": "http://localhost/wiki/",
+        "copyright": "Copyright &copy; 2026 Project Consulting Agency",
+        "logo": "assets/logo.png",
+        "favicon": "assets/favicon.png",
+        "social": [
+            {
+                "icon": "fontawesome/brands/github",
+                "link": "https://github.com/***"
+            },
+            {
+                "icon": "fontawesome/brands/telegram",
+                "link": "https://t.me/***"
+            }
+        ],
+        "fonts": {
+            "text": "Inter",
+            "code": "Roboto Mono"
+        }
+    },
+    "roles": {
+        "admin": {
+            "sections": [
+                "general",
+                "moderator",
+                "admin"
+            ],
+            "theme": {
+                "scheme": "slate",
+                "primary": "red",
+                "accent": "red"
+            }
+        },
+        "moderator": {
+            "sections": [
+                "general",
+                "moderator"
+            ],
+            "theme": {
+                "scheme": "default",
+                "primary": "teal",
+                "accent": "cyan"
+            }
+        },
+        "public": {
+            "sections": [
+                "general"
+            ],
+            "theme": {
+                "scheme": "default",
+                "primary": "blue",
+                "accent": "indigo"
+            }
+        }
+    },
+    "mkdocs_features": [
+        "navigation.instant",
+        "navigation.instant.progress",
+        "navigation.path",
+        "navigation.top",
+        "navigation.expand",
+        "navigation.footer",
+        "navigation.tracking",
+        "content.tabs.link",
+        "content.code.copy",
+        "content.code.annotate",
+        "search.suggest",
+        "search.highlight",
+        "search.share"
+    ]
+}

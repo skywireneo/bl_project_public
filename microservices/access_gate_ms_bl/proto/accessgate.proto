@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package accessgate;
+
+option go_package = "auth/proto";
+
+service AccessGateService {
+  rpc UpdateStatus (UpdateStatusRequest) returns (UpdateStatusResponse);
+  rpc GetWhitelist (GetWhitelistRequest) returns (GetWhitelistResponse);
+  rpc UpdateWhitelist (UpdateWhitelistRequest) returns (UpdateWhitelistResponse);
+}
+
+message UpdateStatusRequest {
+  string key = 1;
+  string value = 2;
+}
+
+message UpdateStatusResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message GetWhitelistRequest {
+  string list_type = 1; // "logins", "statuses", "tokens"
+}
+
+message GetWhitelistResponse {
+  bool success = 1;
+  string message = 2;
+  repeated string items = 3;
+}
+
+message UpdateWhitelistRequest {
+  string list_type = 1; // "logins", "statuses", "tokens"
+  repeated string items = 2;
+}
+
+message UpdateWhitelistResponse {
+  bool success = 1;
+  string message = 2;
+}
+

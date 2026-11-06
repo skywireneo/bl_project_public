@@ -1,0 +1,17 @@
+/.env
+/.git/config
+/.git/HEAD
+/.aws/credentials
+/.ssh/id_rsa
+/wp-admin
+/wp-login.php
+/phpmyadmin
+/admin
+/backup.sql
+/backup.zip
+/config.php
+/database.sql
+/.htaccess
+/server-status
+/actuator/health
+/api/v1/swagger.json

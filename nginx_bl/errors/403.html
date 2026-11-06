@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>403 — Доступ запрещён | BlackList</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0f1117;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    .grid-pattern {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none;
+      z-index: 0;
+      mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+      -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+    }
+
+    .bg-gradient {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at top, rgba(225, 29, 72, 0.05) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 16px clamp(16px, 4vw, 40px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(15, 17, 23, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: clamp(16px, 2vw, 18px);
+      font-weight: 700;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(225, 29, 72, 0.1);
+      border: 1px solid rgba(225, 29, 72, 0.25);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #fb7185;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #e11d48;
+      box-shadow: 0 0 10px #e11d48;
+      animation: pulse-dot 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.6;
+        transform: scale(0.9);
+      }
+    }
+
+    .main-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(20px, 5vw, 60px) clamp(16px, 4vw, 40px);
+      position: relative;
+      z-index: 1;
+    }
+
+    .error-card {
+      width: 100%;
+      max-width: 900px;
+      background: linear-gradient(135deg, rgba(30, 32, 48, 0.95) 0%, rgba(26, 29, 46, 0.95) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: clamp(16px, 3vw, 24px);
+      padding: clamp(24px, 4vw, 40px);
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .error-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(225, 29, 72, 0.3), transparent);
+    }
+
+    .error-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(24px, 4vw, 48px);
+      align-items: center;
+    }
+
+    .error-left {
+      text-align: center;
+    }
+
+    .error-code-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(225, 29, 72, 0.12);
+      border: 1px solid rgba(225, 29, 72, 0.3);
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #fb7185;
+      margin-bottom: 20px;
+    }
+
+    .error-code-badge svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    .error-icon-container {
+      width: clamp(80px, 12vw, 120px);
+      height: clamp(80px, 12vw, 120px);
+      margin: 0 auto 20px;
+      position: relative;
+    }
+
+    .error-icon-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(225, 29, 72, 0.15), rgba(190, 18, 60, 0.1));
+      border-radius: 28px;
+      transform: rotate(-8deg);
+    }
+
+    .error-icon {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+    }
+
+    .error-icon svg {
+      width: clamp(36px, 5vw, 52px);
+      height: clamp(36px, 5vw, 52px);
+    }
+
+    .error-title {
+      font-size: clamp(22px, 3.5vw, 28px);
+      font-weight: 800;
+      color: #f1f5f9;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+
+    .error-right {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .error-subtitle {
+      font-size: clamp(13px, 1.6vw, 15px);
+      color: #94a3b8;
+      line-height: 1.6;
+    }
+
+    .forbidden-info {
+      padding: 14px 16px;
+      background: rgba(225, 29, 72, 0.05);
+      border: 1px solid rgba(225, 29, 72, 0.15);
+      border-radius: 12px;
+      font-size: 12px;
+      color: #cbd5e1;
+      line-height: 1.6;
+    }
+
+    .forbidden-info strong {
+      color: #fb7185;
+      display: block;
+      margin-bottom: 4px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tips-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .tip-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 12px;
+      transition: all 0.2s;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .tip-card:hover {
+      border-color: rgba(225, 29, 72, 0.3);
+      background: rgba(225, 29, 72, 0.05);
+      transform: translateX(4px);
+    }
+
+    .tip-number {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #e11d48, #be123c);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tip-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .tip-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 2px;
+    }
+
+    .tip-description {
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+      border: none;
+      width: 100%;
+    }
+
+    .btn svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .contact-section {
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(225, 29, 72, 0.08), rgba(190, 18, 60, 0.05));
+      border: 1px solid rgba(225, 29, 72, 0.2);
+      border-radius: 14px;
+    }
+
+    .contact-label {
+      font-size: 11px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .contact-label svg {
+      width: 10px;
+      height: 10px;
+    }
+
+    .contact-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: #fb7185;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .contact-link:hover {
+      color: #fda4af;
+      transform: translateX(2px);
+    }
+
+    .contact-link svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .tech-details {
+      padding: 12px 14px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 10px;
+      font-family: 'SF Mono', Monaco, Consolas, monospace;
+      font-size: 10px;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .tech-details span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tech-details svg {
+      width: 9px;
+      height: 9px;
+      opacity: 0.7;
+    }
+
+    .footer {
+      position: relative;
+      z-index: 1;
+      padding: 20px clamp(16px, 4vw, 40px);
+      text-align: center;
+      font-size: 12px;
+      color: #64748b;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      background: rgba(15, 17, 23, 0.5);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    @media (max-width: 768px) {
+      .error-content {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+
+      .error-left {
+        margin-bottom: 8px;
+      }
+
+      .error-icon-container {
+        margin-bottom: 16px;
+      }
+
+      .top-bar {
+        padding: 12px 16px;
+      }
+
+      .status-badge span:not(.status-dot) {
+        display: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .error-card {
+        padding: 20px 16px;
+      }
+
+      .error-title {
+        font-size: 20px;
+      }
+
+      .tip-card {
+        padding: 10px 12px;
+      }
+
+      .tip-card:hover {
+        transform: translateX(2px);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    .btn:focus-visible,
+    .contact-link:focus-visible,
+    .logo:focus-visible,
+    .tip-card:focus-visible {
+      outline: 2px solid #e11d48;
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="bg-gradient"></div>
+  <div class="grid-pattern"></div>
+
+  <div class="top-bar">
+    <a href="/" class="logo" aria-label="BlackList">
+      <span class="logo-icon">🛡️</span>
+      <span>BlackList</span>
+    </a>
+    <div class="status-badge" role="status" aria-live="polite">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span>Доступ запрещён</span>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <div class="error-card" role="alert" aria-labelledby="error-title">
+      <div class="error-content">
+        <div class="error-left">
+          <div class="error-code-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span>Ошибка 403</span>
+          </div>
+
+          <div class="error-icon-container" aria-hidden="true">
+            <div class="error-icon-bg"></div>
+            <div class="error-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="url(#gradient)" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <defs>
+                  <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#e11d48;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#be123c;stop-opacity:1" />
+                  </linearGradient>
+                </defs>
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <line x1="9" y1="9" x2="15" y2="15" stroke-width="2.5" />
+                <line x1="15" y1="9" x2="9" y2="15" stroke-width="2.5" />
+              </svg>
+            </div>
+          </div>
+
+          <h1 class="error-title" id="error-title">Доступ запрещён</h1>
+        </div>
+
+        <div class="error-right">
+          <p class="error-subtitle">
+            У вас недостаточно прав для просмотра этого ресурса. Сервер распознал ваш запрос, но отказывается его
+            выполнить. Это ограничение может быть связано с настройками безопасности или правами доступа.
+          </p>
+
+          <div class="forbidden-info">
+            <strong>Почему это произошло</strong>
+            Ресурс существует, но доступ к нему ограничен. Возможные причины: отсутствующие права доступа, блокировка по
+            IP-адресу, истёкшая сессия или попытка доступа к закрытой зоне без авторизации.
+          </div>
+
+          <div class="tips-grid">
+            <div class="tip-card" tabindex="0">
+              <div class="tip-number" aria-hidden="true">1</div>
+              <div class="tip-content">
+                <div class="tip-title">Войдите в систему</div>
+                <div class="tip-description">Возможно, требуется авторизация для доступа к ресурсу</div>
+              </div>
+            </div>
+            <div class="tip-card" tabindex="0">
+              <div class="tip-number" aria-hidden="true">2</div>
+              <div class="tip-content">
+                <div class="tip-title">Проверьте права доступа</div>
+                <div class="tip-description">Убедитесь, что ваша учётная запись имеет необходимые разрешения</div>
+              </div>
+            </div>
+            <div class="tip-card" tabindex="0">
+              <div class="tip-number" aria-hidden="true">3</div>
+              <div class="tip-content">
+                <div class="tip-title">Обратитесь к администратору</div>
+                <div class="tip-description">Если считаете, что доступ должен быть открыт</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="contact-section">
+            <div class="contact-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                <path
+                  d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+              </svg>
+              <span>Связаться с нами</span>
+            </div>
+            <a href="mailto:***" class="contact-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+              <span>***</span>
+            </a>
+          </div>
+
+          <div class="tech-details" aria-label="Техническая информация">
+            <span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
+                <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
+                <line x1="6" y1="6" x2="6.01" y2="6" />
+                <line x1="6" y1="18" x2="6.01" y2="18" />
+              </svg>
+              403 Forbidden
+            </span>
+            <span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              <span id="timestamp"></span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    © <span id="year"></span> BlackList — Система чёрных списков · Все права защищены
+  </div>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+    document.getElementById('timestamp').textContent = new Date().toLocaleString('ru-RU');
+
+    document.querySelectorAll('.tip-card').forEach(card => {
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          card.click();
+        }
+      });
+    });
+  </script>
+
+</body>
+
+</html>

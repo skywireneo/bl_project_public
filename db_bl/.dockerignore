@@ -1,0 +1,17 @@
+*.log
+logs/
+.env
+.env.local
+.env.*.local
+.git
+.gitignore
+Dockerfile
+.dockerignore
+README.md
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+*.sql
+*.backup
+Иные\ шаги/

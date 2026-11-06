@@ -1,0 +1,108 @@
+services:
+
+  backend_bl:
+    build:
+      target: dev
+    env_file:
+      - .env.common.dev
+      - .env.backend.dev
+    tty: true
+    security_opt:
+      - no-new-privileges:true
+  
+  access_gate_ms_bl:
+    build:
+      target: dev
+    env_file:
+      - .env.common.dev
+      - .env.access_gate_ms.dev
+    volumes:
+      - ./microservices/access_gate_ms_bl:/app
+      - ./microservices/access_gate_ms_bl/site_status:/app/site_status:ro
+    tty: true
+    security_opt:
+      - no-new-privileges:true
+
+  frontend_bl:
+    build:
+      target: dev
+    env_file:
+      - .env.common.dev
+      - .env.frontend.dev
+    tty: true
+    security_opt:
+      - no-new-privileges:true
+
+  files_control_service_bl:
+    build:
+      target: dev
+    env_file:
+      - .env.common.dev
+      - .env.files_control_service.dev
+    tty: true
+    security_opt:
+      - no-new-privileges:true
+  nginx_bl:
+    
+    volumes:
+      - ./nginx_bl/nginx.dev.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
+      
+      - ./nginx_bl/errors:/etc/nginx/errors:ro
+      - ./my_wiki/wiki_data:/opt/project_consulting_agency/wiki_data:ro
+      
+    ports:
+      - "80:80"
+      - "8080:8080"
+      
+    tty: true
+    security_opt:
+      - no-new-privileges:true
+
+  monitor_service_bl:
+    build:
+      target: dev
+    env_file:
+      - .env.common.dev
+      - .env.monitor_service.dev
+    security_opt:
+      - no-new-privileges:true
+    tty: true
+    volumes:
+      - ./monitor_service_bl:${DOCKER_MONITOR_SERVICE_WORKING_DIR}
+      # - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  db_bl:
+    ports:
+      - "${DOCKER_DB_PORT}:5432"
+    tty: true
+    security_opt:
+      - no-new-privileges:true
+
+  pgadmin_bl:
+    ports:
+      - "${DOCKER_PGADMIN_PORT}:8080"
+    tty: true
+    security_opt:
+      - no-new-privileges:true
+
+  redisinsight_bl:
+    ports:
+      - "${DOCKER_REDISINSIGHT_PORT}:5540"
+    tty: true
+    security_opt:
+      - no-new-privileges:true
+  
+  minio-bl:
+    ports:
+      - "${DOCKER_MINIO_SYSTEM_PORT}:9000"
+      - "${DOCKER_MINIO_UI_PORT}:9001"
+    tty: true
+    security_opt:
+      - no-new-privileges:true
+
+  redis_bl:
+    security_opt:
+      - no-new-privileges:true
+    tty: true

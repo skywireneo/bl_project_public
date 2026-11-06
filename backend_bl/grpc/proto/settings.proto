@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package settings;
+
+service SettingsService {
+  rpc GetSettings (GetSettingsRequest) returns (GetSettingsResponse);
+  rpc GetSettingsArray (GetSettingsArrayRequest) returns (GetSettingsArrayResponse);
+
+}
+
+message GetSettingsRequest {
+  string name = 1;
+}
+
+message GetSettingsResponse {
+  string value = 1;
+}
+
+message GetSettingsArrayRequest {
+  string name = 1;
+}
+
+message GetSettingsArrayResponse {
+  repeated string value = 1;
+}

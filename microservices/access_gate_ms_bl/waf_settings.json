@@ -1,0 +1,8 @@
+{
+  "geo_mode": "rf_only",
+  "blocked_countries": "BR,CN,IN,IR,KP",
+  "time_window_enabled": false,
+  "time_window_config": "",
+  "rate_limit_guest": 50,
+  "rate_limit_user": 100
+}

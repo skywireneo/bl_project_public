@@ -1,0 +1,97 @@
+.editable-content b,
+.editable-content strong,
+.no-editable-content b,
+.no-editable-content strong {
+  font-weight: bold !important;
+}
+.editable-content h2,
+.no-editable-content h2 {
+  font-family: monospace;
+  background: #f5f5f5;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 1.2em;
+  margin-top: 1.2em;
+  margin-bottom: 0.6em;
+  color: #2c3e50;
+  font-weight: bold;
+}
+
+.editable-content h3,
+.no-editable-content h3 {
+  font-family: monospace;
+  background: #f8f8f8;
+  padding: 3px 5px;
+  border-radius: 3px;
+  font-size: 1.1em;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  color: #34495e;
+  font-weight: bold;
+}
+.editable-content i,
+.editable-content em,
+.no-editable-content i,
+.no-editable-content em {
+  font-style: italic !important;
+}
+.editable-content u,
+.no-editable-content u {
+  text-decoration: underline !important;
+}
+.editable-content s,
+.editable-content strike,
+.no-editable-content s,
+.no-editable-content strike {
+  text-decoration: line-through !important;
+}
+.editable-content blockquote,
+.no-editable-content blockquote {
+  border-left: 3px solid #ccc;
+  margin: 0.5em 0;
+  padding-left: 1em;
+  color: #666;
+}
+.editable-content code,
+.no-editable-content code {
+  font-family: monospace;
+  background: #f5f5f5;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+.editable-content tg-spoiler {
+  background: #000000e0;
+  color: #ffffff5b;
+  cursor: pointer;
+  padding: 0 2px;
+  border-radius: 3px;
+}
+
+.no-editable-content tg-spoiler {
+  background: #181818;
+  color: #181818;
+  cursor: pointer;
+  padding: 0 2px;
+  border-radius: 3px;
+}
+.editable-content tg-spoiler:hover,
+.no-editable-content tg-spoiler:hover {
+  color: #fff;
+}
+
+.editable-content br {
+  display: block;
+  position: relative;
+  margin-bottom: 0.5em;
+}
+.editable-content br:after,
+.no-editable-content br:after {
+  content: "¶";
+  color: #999;
+  font-size: 0.8em;
+  position: absolute;
+  left: -1.2em;
+  top: 0;
+  pointer-events: none;
+  user-select: none;
+}

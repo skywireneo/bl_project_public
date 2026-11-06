@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package files;
+
+service FilesService {
+  rpc AVdetected (AVdetectedRequest) returns (AVdetectedResponse);
+  rpc DeleteIncidentString (DeleteIncidentStringRequest) returns (DeleteIncidentStringResponse);
+  rpc CanSee (CanSeeRequest) returns (CanSeeResponse);
+  rpc CanEdit (CanEditRequest) returns (CanEditResponse);
+  rpc FileCount (FileCountRequest) returns (FileCountResponse);
+  rpc addWm (addWmRequest) returns (addWmResponse);
+  rpc deleteWm (deleteWmRequest) returns (deleteWmResponse);
+
+}
+
+message AVdetectedRequest {
+  string id = 1;
+}
+
+message AVdetectedResponse {
+  bool status = 1;
+}
+
+message DeleteIncidentStringRequest {
+  string moduleName = 1;
+  string id = 2;
+}
+
+message DeleteIncidentStringResponse {
+  bool status = 1;
+}
+
+message CanSeeRequest {
+  string moduleName = 1;
+  string recordId = 2;
+  string userId = 3;
+  string userStatus = 4;
+}
+
+message CanSeeResponse {
+  bool status = 1;
+}
+
+message CanEditRequest {
+  string moduleName = 1;
+  string recordId = 2;
+  string userId = 3;
+  string userStatus = 4;
+}
+
+message CanEditResponse {
+  bool status = 1;
+}
+
+message addWmRequest {
+  bool payload = 1;
+}
+
+message addWmResponse {
+  bool status = 1;
+}
+
+message deleteWmRequest {
+  bool payload = 1;
+}
+
+message deleteWmResponse {
+  bool status = 1;
+}
+
+message FileCountRequest {
+  string moduleName = 1;
+  string id = 2;
+}
+
+message FileCountResponse {
+  string count = 1;
+}

@@ -1,0 +1,8 @@
+schedule>=1.2.0
+requests>=2.31.0
+pyyaml>=6.0
+croniter>=2.0.0
+python-dotenv>=1.0.0
+pytz>=2024.1
+docker>=7.0.0
+sqlalchemy>=2.0.0

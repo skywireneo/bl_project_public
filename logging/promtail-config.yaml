@@ -1,0 +1,59 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: label
+            values: ["logging=promtail"]
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: 'project'
+    pipeline_stages:
+      - docker: {}
+      
+      - match:
+          selector: '{container="backend_bl"}'
+          stages:
+            - json:
+                expressions:
+                  level: level
+                  msg: msg
+                  req_id: req_id
+                  user_id: user_id
+                  user_login: user_login
+                  client_ip: client_ip
+                  http_method: http_method
+                  http_url: http_url
+            - labels:
+                level:
+                req_id:
+                user_id:
+                user_login:
+                client_ip:
+                http_method:
+                http_url:
+
+      - match:
+          selector: '{container="nginx_bl"}'
+          stages:
+            - regex:
+                expression: '^(?P<ip>\S+) - (?P<xff>\S+) - (?P<real_ip>\S+) \[(?P<time>[^\]]+)\] "(?P<method>\S+) (?P<url>\S+) \S+" (?P<status>\d+) (?P<bytes>\d+) "(?P<referer>[^"]*)" "(?P<ua>[^"]*)" req_status:(?P<req_status>\S+) req_id:(?P<req_id>\S+)'
+            - labels:
+                status:
+                method:
+                req_id:
+                req_status:

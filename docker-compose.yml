@@ -1,0 +1,299 @@
+services:
+    
+  backend_bl:
+    build: 
+      context: backend_bl
+    container_name: backend_bl
+    working_dir: ${DOCKER_BACKEND_WORKING_DIR}
+    networks: 
+      - node-network
+    volumes: 
+      - ./backend_bl:${DOCKER_BACKEND_WORKING_DIR}
+      - ${DOCKER_BACKEND_WORKING_DIR}/node_modules
+    ports: 
+      - "${DOCKER_BACKEND_PORT}:3000"
+    # command: >
+    #   sh -c '
+    #     echo "Ждём 30 секунд перед запуском backend..."
+    #     sleep 30
+    #     echo "Запускаем backend..."
+    #     npm start
+    #   '
+    # restart: unless-stopped
+    depends_on:
+      # - redis_bl
+      - db_bl
+      # - minio-bl
+    labels:
+      - "logging=promtail"
+  
+  access_gate_ms_bl:
+    build:
+      context: microservices/access_gate_ms_bl
+    container_name: access_gate_ms_bl
+    working_dir: /app
+    networks:
+      - node-network
+    volumes:
+      # Технические работы
+      - ./microservices/access_gate_ms_bl/site_status:/app/site_status:rw
+      - ./microservices/access_gate_ms_bl/access_whitelist_logins:/app/access_whitelist_logins:rw
+      - ./microservices/access_gate_ms_bl/access_whitelist_statuses:/app/access_whitelist_statuses:rw
+      - ./microservices/access_gate_ms_bl/access_whitelist_tokens:/app/access_whitelist_tokens:rw
+      
+      # Списки
+      - ./microservices/access_gate_ms_bl/access_whitelist_ip_blacklist:/app/access_whitelist_ip_blacklist:rw
+      - ./microservices/access_gate_ms_bl/access_whitelist_ip_whitelist:/app/access_whitelist_ip_whitelist:rw
+      - ./microservices/access_gate_ms_bl/access_whitelist_ua_blacklist:/app/access_whitelist_ua_blacklist:rw
+      - ./microservices/access_gate_ms_bl/access_whitelist_honeypot_paths:/app/access_whitelist_honeypot_paths:rw
+      - ./microservices/access_gate_ms_bl/access_whitelist_banned_tokens:/app/access_whitelist_banned_tokens:rw
+      
+      # Настройки WAF и GeoIP база
+      - ./microservices/access_gate_ms_bl/waf_settings.json:/app/waf_settings.json:rw
+      - ./microservices/access_gate_ms_bl/GeoLite2-Country.mmdb:/app/GeoLite2-Country.mmdb:ro
+    ports:
+      - "${DOCKER_ACCESS_GATE_MS_PORT}:3000"
+    # restart: unless-stopped
+    # depends_on:
+    #   - redis
+
+  frontend_bl:
+    build: 
+      context: frontend_bl
+    container_name: frontend_bl
+    working_dir: ${DOCKER_FRONTEND_WORKING_DIR}
+    networks: 
+      - node-network
+    volumes: 
+      - ./frontend_bl:${DOCKER_FRONTEND_WORKING_DIR}
+      - ${DOCKER_FRONTEND_WORKING_DIR}/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - FAST_REFRESH=true
+    stdin_open: true
+    ports: 
+      - "${DOCKER_FRONTEND_PORT}:5173"
+    # command: >
+    #   sh -c '
+    #     echo "Ждём 40 секунд перед запуском frontend..."
+    #     sleep 40
+    #     echo "Запускаем frontend..."
+    #     npm start
+    #   '
+    depends_on:
+      - backend_bl
+
+  db_bl:
+    build: 
+      context: ./db_bl
+    container_name: db_bl
+    # restart: always
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment: 
+      POSTGRES_USER: ${DOCKER_DB_USER}
+      POSTGRES_PASSWORD: "${DOCKER_DB_PASSWORD}"
+      POSTGRES_DB: "${DOCKER_DB_DB}"
+    command: >
+      postgres 
+      -c shared_preload_libraries=pg_stat_statements
+      -c track_activity_query_size=2048
+      -c pg_stat_statements.track=all
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DOCKER_DB_USER} -d ${DOCKER_DB_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: 
+      - node-network
+
+  nginx_bl:
+    build: 
+      context: nginx_bl
+    container_name: nginx_bl
+    # restart: always
+    networks: 
+      - node-network
+    # command: >
+    #   sh -c '
+    #     echo "Ждём 60 секунд перед запуском nginx..."
+    #     sleep 60
+    #     echo "Запускаем nginx..."
+    #     nginx -g "daemon off;"
+    #   '
+    depends_on:
+      - backend_bl
+  #     - frontend
+    labels:
+      - "logging=promtail"
+
+  pgadmin_bl:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    # restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "${DOCKER_PGADMIN_DEFAULT_EMAIL}"
+      PGADMIN_DEFAULT_PASSWORD: "${DOCKER_PGADMIN_DEFAULT_PASSWORD}"
+    volumes:
+      - ./pgadmin4_bl/servers.json:/pgadmin4/servers.json
+    networks:
+      - node-network
+    depends_on:
+      - db_bl
+
+  redis_bl:
+    image: redis:7
+    container_name: redis_bl
+    # restart: always
+    volumes:
+      - redis_data:/data
+      - ./redis_bl/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./redis_bl/users.acl:/usr/local/etc/redis/users.acl
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    networks:
+      - node-network
+
+  redisinsight_bl:
+    image: redislabs/redisinsight:latest
+    container_name: redisinsight_bl
+    # restart: always
+    volumes:
+      - redisinsight_data:/data
+    networks:
+      - node-network
+    depends_on:
+      - redis_bl
+
+  minio-bl:
+    image: minio/minio:latest
+    container_name: minio-bl
+    # restart: always
+    environment:
+      MINIO_ROOT_USER: ${DOCKER_MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${DOCKER_MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+      - ./minio-bl/config:/root/.minio
+    command: server /data --console-address ":9001"
+    networks:
+      - node-network
+
+  files_control_service_bl:
+    build:
+      context: files_control_service_bl
+    container_name: files_control_service_bl
+    working_dir: ${DOCKER_FILES_CONTROL_SERVICE_WORKING_DIR}
+    networks:
+      - node-network
+    volumes:
+      - ./files_control_service_bl:${DOCKER_FILES_CONTROL_SERVICE_WORKING_DIR}
+      - ${DOCKER_FILES_CONTROL_SERVICE_WORKING_DIR}/node_modules
+    ports:
+      - "${DOCKER_FILES_CONTROL_SERVICE_PORT}:3000"
+    # restart: unless-stopped
+    # command: >
+    #   sh -c '
+    #     echo "Ждём 35 секунд перед запуском logs_service..."
+    #     sleep 35
+    #     echo "Запускаем logs_service..."
+    #     npm start
+    #   '
+  #   depends_on:
+  #     - rabbitmq
+  #     - redis
+  
+  monitor_service_bl:
+    build:
+      context: ./monitor_service_bl
+    container_name: monitor_service_bl
+    working_dir: ${DOCKER_MONITOR_SERVICE_WORKING_DIR}
+    networks:
+      - node-network
+    volumes:
+      - ./monitor_service_bl:${DOCKER_MONITOR_SERVICE_WORKING_DIR}
+      - ./backups_bl:/app/backups
+    stdin_open: true
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DOCKER_HOST=tcp://docker-socket-proxy:2375
+      - DOCKER_SERVICE_CHECK_DELAY=disable
+      - DOCKER_API_READONLY=true
+    # restart: unless-stopped
+    depends_on:
+      - backend_bl
+      - redis_bl
+  
+
+  # ==========================================
+  # НОВЫЙ СЕРВИС: Portainer CE
+  # ==========================================
+  portainer_bl:
+    image: portainer/portainer-ce:latest
+    container_name: portainer_bl
+    restart: unless-stopped
+    networks:
+      - node-network
+    ports:
+      - "9999:9000"   # HTTP доступ
+      - "9443:9443"   # HTTPS доступ
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  
+      - portainer_data:/data                       
+    security_opt:
+      - no-new-privileges:true
+
+  loki:
+    image: grafana/loki:2.9.4
+    container_name: loki_bl
+    networks:
+      - node-network
+    volumes:
+      - ./logging/loki-config.yaml:/etc/loki/local-config.yaml
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    # restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:2.9.4
+    container_name: promtail_bl
+    networks:
+      - node-network
+    volumes:
+      - ./logging/promtail-config.yaml:/etc/promtail/config.yml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro 
+      - /var/run/docker.sock:/var/run/docker.sock:ro 
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    # restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana_bl
+    networks:
+      - node-network
+    ports:
+      - "8081:3000" 
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=blacklistpvz 
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./logging/grafana/provisioning:/etc/grafana/provisioning 
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - loki
+
+volumes:
+  redis_data:
+  redisinsight_data:
+  minio_data:
+  pgdata:
+  portainer_data:
+  loki_data:
+  grafana_data:
+
+networks:
+  node-network:
+    driver: bridge

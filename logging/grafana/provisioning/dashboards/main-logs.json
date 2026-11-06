@@ -1,0 +1,459 @@
+{
+    "annotations": {
+        "list": []
+    },
+    "editable": true,
+    "graphTooltip": 0,
+    "links": [],
+    "refresh": "10s",
+    "schemaVersion": 38,
+    "tags": [
+        "logs",
+        "observability"
+    ],
+    "templating": {
+        "list": [
+            {
+                "current": {
+                    "selected": true,
+                    "text": [
+                        "All"
+                    ],
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": {
+                    "type": "loki",
+                    "uid": "loki"
+                },
+                "definition": "label_values(container)",
+                "includeAll": true,
+                "multi": true,
+                "name": "container",
+                "query": "label_values(container)",
+                "refresh": 1,
+                "type": "query"
+            },
+            {
+                "current": {
+                    "selected": true,
+                    "text": [
+                        "All"
+                    ],
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": {
+                    "type": "loki",
+                    "uid": "loki"
+                },
+                "definition": "label_values(level)",
+                "includeAll": true,
+                "multi": true,
+                "name": "level",
+                "query": "label_values(level)",
+                "refresh": 1,
+                "type": "query"
+            },
+            {
+                "allValue": ".*",
+                "current": {
+                    "selected": true,
+                    "text": [
+                        "All"
+                    ],
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": {
+                    "type": "loki",
+                    "uid": "loki"
+                },
+                "definition": "label_values(user_id)",
+                "includeAll": true,
+                "multi": true,
+                "name": "user_id",
+                "query": "label_values(user_id)",
+                "refresh": 1,
+                "type": "query"
+            }
+        ]
+    },
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "timezone": "browser",
+    "title": "Backend Observability & Logs",
+    "uid": "backend-obs-001",
+    "panels": [
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "id": 10,
+            "title": "Высокоуровневые метрики (Log-to-Metrics)",
+            "type": "row"
+        },
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "loki"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisCenteredZero": false,
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "lineWidth": 2,
+                        "fillOpacity": 20
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 1
+            },
+            "id": 1,
+            "options": {
+                "legend": {
+                    "calcs": [
+                        "mean",
+                        "max"
+                    ],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "loki"
+                    },
+                    "expr": "sum by (level) (count_over_time({container=~\"$container\"} | json | level=~\"$level\" [$__rate_interval]))",
+                    "legendFormat": "{{level}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Объем логов по уровням (за период)",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "loki"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 1
+                            }
+                        ]
+                    }
+                }
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 12,
+                "y": 1
+            },
+            "id": 2,
+            "options": {
+                "colorMode": "background",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "sum"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "textMode": "value_and_name"
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "loki"
+                    },
+                    "expr": "sum(count_over_time({container=~\"$container\"} | json | level=\"error\" [$__rate_interval]))",
+                    "legendFormat": "Всего ошибок",
+                    "refId": "A"
+                }
+            ],
+            "title": "Ошибки (Backend)",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "loki"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "yellow",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 1
+                            }
+                        ]
+                    }
+                }
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 18,
+                "y": 1
+            },
+            "id": 3,
+            "options": {
+                "colorMode": "background",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "sum"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "textMode": "value_and_name"
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "loki"
+                    },
+                    "expr": "sum(count_over_time({container=\"nginx_bl\"} |~ \"status:5..\" [$__rate_interval]))",
+                    "legendFormat": "HTTP 5xx",
+                    "refId": "A"
+                }
+            ],
+            "title": "Ошибки шлюза (Nginx 5xx)",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "loki"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "continuous-GrYlRd"
+                    },
+                    "custom": {
+                        "axisCenteredZero": false,
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        }
+                    }
+                }
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 5
+            },
+            "id": 4,
+            "options": {
+                "displayMode": "gradient",
+                "minVizHeight": 10,
+                "minVizWidth": 0,
+                "orientation": "horizontal",
+                "reduceOptions": {
+                    "calcs": [
+                        "sum"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showUnfilled": true
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "loki"
+                    },
+                    "expr": "topk(5, sum by (msg) (count_over_time({container=~\"$container\"} | json | level=\"error\" [$__rate_interval])))",
+                    "legendFormat": "{{msg}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Топ-5 самых частых ошибок",
+            "type": "bargauge"
+        },
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 9
+            },
+            "id": 11,
+            "title": "Детальный анализ и расследование",
+            "type": "row"
+        },
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "loki"
+            },
+            "gridPos": {
+                "h": 12,
+                "w": 24,
+                "x": 0,
+                "y": 10
+            },
+            "id": 5,
+            "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": false,
+                "showCommonLabels": false,
+                "showLabels": false,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "loki"
+                    },
+                    "expr": "{container=~\"$container\"} | json | level=~\"$level\" | user_id=~\"$user_id\" | line_format \"{{.level}} | {{.http_method}} {{.http_url}} | user:{{.user_login}} ({{.user_id}}) | IP:{{.client_ip}} | {{.msg}}\"",
+                    "refId": "A"
+                }
+            ],
+            "title": "Поток логов (Детализированный)",
+            "type": "logs"
+        },
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "loki"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "custom": {
+                        "align": "auto",
+                        "cellOptions": {
+                            "type": "auto"
+                        },
+                        "inspect": false
+                    }
+                }
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 22
+            },
+            "id": 6,
+            "options": {
+                "cellHeight": "sm",
+                "footer": {
+                    "countRows": false,
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true,
+                "sortBy": [
+                    {
+                        "desc": true,
+                        "displayName": "Count"
+                    }
+                ]
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "loki"
+                    },
+                    "expr": "topk(10, sum by (user_login, http_url, msg) (count_over_time({container=\"backend_bl\"} | json | level=\"error\" | user_id!=\"\" [$__rate_interval])))",
+                    "format": "table",
+                    "refId": "A"
+                }
+            ],
+            "title": "Топ-10: Пользователь + Эндпоинт + Ошибка",
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "excludeByName": {
+                            "Time": true
+                        },
+                        "indexByName": {
+                            "Count": 0,
+                            "user_login": 1,
+                            "http_url": 2,
+                            "msg": 3
+                        }
+                    }
+                }
+            ],
+            "type": "table"
+        }
+    ]
+}

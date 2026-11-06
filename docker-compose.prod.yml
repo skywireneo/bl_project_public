@@ -1,0 +1,274 @@
+version: '3.8'
+
+services:
+
+  backend_bl:
+    build:
+      context: ./backend_bl
+      target: prod
+    container_name: backend_bl
+    env_file:
+      - .env.common.prod
+      - .env.backend.prod
+    networks:
+      - node-network
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - db_bl
+      - redis_bl
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+  
+  access_gate_ms_bl:
+    build:
+      context: ./microservices/access_gate_ms_bl
+      target: prod
+    container_name: access_gate_ms_bl
+    env_file:
+      - .env.common.prod
+      - .env.access_gate_ms.prod
+    networks:
+      - node-network
+    volumes:
+      - ./microservices/access_gate_ms_bl/site_status:/app/site_status:ro
+      - ./microservices/access_gate_ms_bl/access_whitelist_logins:/app/access_whitelist_logins:ro
+      - ./microservices/access_gate_ms_bl/access_whitelist_statuses:/app/access_whitelist_statuses:ro
+      - ./microservices/access_gate_ms_bl/access_whitelist_tokens:/app/access_whitelist_tokens:ro
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "/app/access_gate", "--health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  frontend_bl:
+    build:
+      context: ./frontend_bl
+      target: prod
+      args:
+        REACT_APP_DONATION_PLATFORM_URL: ${REACT_APP_DONATION_PLATFORM_URL}
+        REACT_APP_SUPPORT_EMAIL: ${REACT_APP_SUPPORT_EMAIL}
+        REACT_APP_API_URL: ${REACT_APP_API_URL}
+        REACT_APP_BACKEND_SECRET_KEY: ${REACT_APP_BACKEND_SECRET_KEY}
+    container_name: frontend_bl
+    networks:
+      - node-network
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - backend_bl
+
+  files_control_service_bl:
+    build:
+      context: ./files_control_service_bl
+      target: prod
+    container_name: files_control_service_bl
+    env_file:
+      - .env.common.prod
+      - .env.files_control_service.prod
+    networks:
+      - node-network
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - backend_bl
+      - redis_bl
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  nginx_bl:
+    build:
+      context: ./nginx_bl
+      args:
+        NGINX_CONF: nginx.prod.conf
+    container_name: nginx_bl
+    networks:
+      - node-network
+    volumes:
+      - ./nginx_bl/errors:/etc/nginx/errors:ro
+      - ./nginx_bl/htPasswords/.htpasswd:/etc/nginx/.htpasswd:ro
+      - nginx_logs:/var/log/nginx
+      # Для SSL (раскомментируйте при использовании Let's Encrypt)
+      # - ./nginx_bl/letsencrypt:/etc/letsencrypt:rw
+      # - ./nginx_bl/certbot/www:/var/www/certbot:rw
+    ports:
+      - "80:80"
+      # - "443:443"  # Раскомментируйте при наличии SSL
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - backend_bl
+      - frontend_bl
+      - access_gate_ms_bl
+      - files_control_service_bl
+      - pgadmin_bl
+      - redisinsight_bl
+      - minio-bl
+
+  monitor_service_bl:
+    build:
+      context: ./monitor_service_bl
+      target: prod
+    container_name: monitor_service_bl
+    env_file:
+      - .env.common.prod
+      - .env.monitor_service.prod
+    networks:
+      - node-network
+    volumes:
+      - ./backups_bl:/app/backups:rw
+      # - /var/run/docker.sock:/var/run/docker.sock:ro  # Только если нужен доступ к Docker API
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - backend_bl
+      - redis_bl
+
+  db_bl:
+    build:
+      context: ./db_bl
+    container_name: db_bl
+    networks:
+      - node-network
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db_bl/db_init:/docker-entrypoint-initdb.d:ro
+    environment:
+      POSTGRES_USER: ${DOCKER_DB_USER}
+      POSTGRES_PASSWORD: ${DOCKER_DB_PASSWORD}
+      POSTGRES_DB: ${DOCKER_DB_DB}
+    command: >
+      postgres 
+      -c shared_preload_libraries=pg_stat_statements
+      -c track_activity_query_size=2048
+      -c pg_stat_statements.track=all
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DOCKER_DB_USER} -d ${DOCKER_DB_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    # Ports закрыты для безопасности - доступ только из внутренней сети
+    # expose:
+    #   - "5432"
+
+  redis_bl:
+    image: redis:7-alpine
+    container_name: redis_bl
+    networks:
+      - node-network
+    volumes:
+      - redis_data:/data
+      - ./redis_bl/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./redis_bl/users.acl:/usr/local/etc/redis/users.acl:ro
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    # Ports закрыты для безопасности - доступ только из внутренней сети
+    # expose:
+    #   - "6379"
+
+  pgadmin_bl:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin_bl
+    networks:
+      - node-network
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin4_bl/servers.json:/pgadmin4/servers.json:ro
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${DOCKER_PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${DOCKER_PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - db_bl
+    # Доступ только через nginx с Basic Auth!
+    # expose:
+    #   - "80"
+
+  redisinsight_bl:
+    image: redis/redisinsight:latest
+    container_name: redisinsight_bl
+    networks:
+      - node-network
+    volumes:
+      - redisinsight_data:/data
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - redis_bl
+    # Доступ только через nginx с Basic Auth!
+    # expose:
+    #   - "5540"
+
+  minio-bl:
+    image: minio/minio:latest
+    container_name: minio-bl
+    networks:
+      - node-network
+    volumes:
+      - minio_data:/data
+      - ./minio-bl/config:/root/.minio:rw
+    environment:
+      MINIO_ROOT_USER: ${DOCKER_MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${DOCKER_MINIO_ROOT_PASSWORD}
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    # Доступ только через nginx с Basic Auth!
+    # ports:
+    #   - "${DOCKER_MINIO_SYSTEM_PORT}:9000"
+    #   - "${DOCKER_MINIO_UI_PORT}:9001"
+
+volumes:
+  redis_data:
+  redisinsight_data:
+  minio_data:
+  pgdata:
+  pgadmin_data:
+  nginx_logs:
+
+networks:
+  node-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
